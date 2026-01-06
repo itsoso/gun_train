@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能枪械训练系统</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ff0080;
+            --dark: #0a0a0f;
+            --darker: #050507;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Microsoft YaHei', sans-serif;
+            background: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 动态背景 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.8) 0%, var(--darker) 100%);
+        }
+
+        .grid-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 1;
+            padding: 40px;
+        }
+
+        .logo {
+            font-size: 120px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 60px;
+            letter-spacing: 3px;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1000px;
+        }
+
+        .portal-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 
+                0 20px 40px rgba(0, 212, 255, 0.2),
+                0 0 60px rgba(0, 212, 255, 0.1);
+        }
+
+        .portal-card:hover::before {
+            opacity: 1;
+        }
+
+        .portal-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .portal-title {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .portal-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .portal-card.student {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+        .portal-card.student:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+        }
+
+        .portal-card.admin {
+            border-color: rgba(255, 0, 128, 0.3);
+        }
+        .portal-card.admin:hover {
+            border-color: #ff0080;
+            box-shadow: 0 20px 40px rgba(255, 0, 128, 0.3);
+        }
+        .portal-card.admin::before {
+            background: linear-gradient(90deg, transparent, #ff0080, transparent);
+        }
+
+        .portal-card.leader {
+            border-color: rgba(128, 0, 255, 0.3);
+        }
+        .portal-card.leader:hover {
+            border-color: #8000ff;
+            box-shadow: 0 20px 40px rgba(128, 0, 255, 0.3);
+        }
+        .portal-card.leader::before {
+            background: linear-gradient(90deg, transparent, #8000ff, transparent);
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 30px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .status-bar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 30px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+            
+            h1 {
+                font-size: 32px;
+            }
+            
+            .logo {
+                font-size: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="grid-lines"></div>
+    
+    <div class="status-bar">
+        <div class="status-dot"></div>
+        <span class="status-text">系统运行中 | 在线工位: 42/50</span>
+    </div>
+
+    <div class="container">
+        <div class="logo">🎯</div>
+        <h1>智能枪械训练系统</h1>
+        <p class="subtitle">AI-Powered Firearm Training System</p>
+        
+        <div class="portal-grid">
+            <a href="student/" class="portal-card student">
+                <span class="portal-icon">👤</span>
+                <div class="portal-title">学员训练端</div>
+                <p class="portal-desc">实时动作评分、即时反馈纠错<br>形成规范肌肉记忆</p>
+            </a>
+            
+            <a href="admin/" class="portal-card admin">
+                <span class="portal-icon">🖥️</span>
+                <div class="portal-title">教官监控中心</div>
+                <p class="portal-desc">50工位同时监控、智能预警<br>高效指导训练</p>
+            </a>
+            
+            <a href="leader/" class="portal-card leader">
+                <span class="portal-icon">📊</span>
+                <div class="portal-title">数据分析看板</div>
+                <p class="portal-desc">训练数据可视化、趋势分析<br>辅助科学决策</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="footer">
+        Powered by <a href="https://github.com/itsoso/gun_train" target="_blank">AI Training System</a> | Version 1.0.0
+    </div>
+
+    <script>
+        // 添加一些交互效果
+        document.querySelectorAll('.portal-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.querySelector('.portal-icon').style.transform = 'scale(1.2)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.querySelector('.portal-icon').style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
+

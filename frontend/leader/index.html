@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>训练数据看板 - 智能枪械训练系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-card);
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .date-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-dark);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .date-picker input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .btn-export {
+            background: var(--accent-green);
+            color: var(--bg-dark);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+
+        .btn-export:hover {
+            transform: scale(1.05);
+        }
+
+        .dashboard {
+            padding: 30px 40px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .summary-card.blue::before { background: var(--accent-blue); }
+        .summary-card.green::before { background: var(--accent-green); }
+        .summary-card.yellow::before { background: var(--accent-yellow); }
+        .summary-card.red::before { background: var(--accent-red); }
+        .summary-card.purple::before { background: var(--accent-purple); }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .summary-card.blue .summary-value { color: var(--accent-blue); }
+        .summary-card.green .summary-value { color: var(--accent-green); }
+        .summary-card.yellow .summary-value { color: var(--accent-yellow); }
+        .summary-card.red .summary-value { color: var(--accent-red); }
+        .summary-card.purple .summary-value { color: var(--accent-purple); }
+
+        .summary-trend {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .summary-trend.up { color: var(--accent-green); }
+        .summary-trend.down { color: var(--accent-red); }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-tab {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-tab.active {
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+            border-color: var(--accent-blue);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-dim);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .rank {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .rank-1 { background: #ffd700; color: #000; }
+        .rank-2 { background: #c0c0c0; color: #000; }
+        .rank-3 { background: #cd7f32; color: #fff; }
+        .rank-other { background: var(--border); color: var(--text-dim); }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .badge-warning { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .badge-danger { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+
+        .progress-bar-container {
+            background: var(--border);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--accent-green);
+        }
+
+        .charts-row-2 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .mini-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mini-stat:last-child {
+            border-bottom: none;
+        }
+
+        .mini-stat-label {
+            color: var(--text-dim);
+        }
+
+        .mini-stat-value {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>
+            <span style="font-size: 28px;">📊</span>
+            训练数据分析看板
+        </h1>
+        <div class="header-controls">
+            <div class="date-picker">
+                <span>📅</span>
+                <input type="date" id="startDate" value="2024-01-01">
+                <span>至</span>
+                <input type="date" id="endDate" value="2024-01-06">
+            </div>
+            <button class="btn-export">
+                <span>📥</span> 导出报表
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <!-- 汇总卡片 -->
+        <div class="summary-cards">
+            <div class="summary-card blue">
+                <div class="summary-label">训练场次</div>
+                <div class="summary-value">128</div>
+                <div class="summary-trend up">↑ 12% 较上月</div>
+            </div>
+            <div class="summary-card green">
+                <div class="summary-label">参训人数</div>
+                <div class="summary-value">856</div>
+                <div class="summary-trend up">↑ 8% 较上月</div>
+            </div>
+            <div class="summary-card yellow">
+                <div class="summary-label">平均得分</div>
+                <div class="summary-value">82.5</div>
+                <div class="summary-trend up">↑ 3.2 较上月</div>
+            </div>
+            <div class="summary-card purple">
+                <div class="summary-label">通过率</div>
+                <div class="summary-value">76%</div>
+                <div class="summary-trend up">↑ 5% 较上月</div>
+            </div>
+            <div class="summary-card red">
+                <div class="summary-label">安全预警</div>
+                <div class="summary-value">23</div>
+                <div class="summary-trend down">↓ 18% 较上月</div>
+            </div>
+        </div>
+
+        <!-- 图表行1 -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-title">📈 训练趋势分析</div>
+                <div class="chart-container" id="trendChart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🎯 成绩分布</div>
+                <div class="chart-container" id="distributionChart"></div>
+            </div>
+        </div>
+
+        <!-- 排行榜 -->
+        <div class="table-card">
+            <div class="table-header">
+                <div class="chart-title">🏆 学员排行榜</div>
+                <div class="table-tabs">
+                    <button class="table-tab active">综合排名</button>
+                    <button class="table-tab">进步最快</button>
+                    <button class="table-tab">训练最多</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>警号</th>
+                        <th>姓名</th>
+                        <th>单位</th>
+                        <th>训练次数</th>
+                        <th>平均分</th>
+                        <th>通过率</th>
+                        <th>状态</th>
+                        <th>趋势</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><div class="rank rank-1">1</div></td>
+                        <td>001023</td>
+                        <td>张明</td>
+                        <td>市局刑侦支队</td>
+                        <td>45</td>
+                        <td>96.5</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 98%"></div>
+                                </div>
+                                <span>98%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-success">已通过实弹</span></td>
+                        <td style="color: var(--accent-green);">↑ 进步中</td>
+                    </tr>
+                    <tr>
+                        <td><div class="rank rank-2">2</div></td>
+                        <td>001045</td>
+                        <td>李强</td>
+                        <td>市局特警支队</td>
+                        <td>52</td>
+                        <td>94.2</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 95%"></div>
+                                </div>
+                                <span>95%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-success">已通过实弹</span></td>
+                        <td style="color: var(--accent-green);">↑ 进步中</td>
+                    </tr>
+                    <tr>
+                        <td><div class="rank rank-3">3</div></td>
+                        <td>001089</td>
+                        <td>王芳</td>
+                        <td>区分局治安大队</td>
+                        <td>38</td>
+                        <td>91.8</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 90%"></div>
+                                </div>
+                                <span>90%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-success">已通过实弹</span></td>
+                        <td style="color: var(--text-dim);">— 稳定</td>
+                    </tr>
+                    <tr>
+                        <td><div class="rank rank-other">4</div></td>
+                        <td>001102</td>
+                        <td>赵伟</td>
+                        <td>市局交警支队</td>
+                        <td>29</td>
+                        <td>88.3</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 85%"></div>
+                                </div>
+                                <span>85%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-warning">空枪训练中</span></td>
+                        <td style="color: var(--accent-green);">↑ 进步中</td>
+                    </tr>
+                    <tr>
+                        <td><div class="rank rank-other">5</div></td>
+                        <td>001156</td>
+                        <td>孙磊</td>
+                        <td>区分局刑侦大队</td>
+                        <td>22</td>
+                        <td>85.6</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width: 80%"></div>
+                                </div>
+                                <span>80%</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-warning">空枪训练中</span></td>
+                        <td style="color: var(--accent-red);">↓ 需关注</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 图表行2 -->
+        <div class="charts-row-2" style="margin-top: 30px;">
+            <div class="chart-card">
+                <div class="chart-title">📊 各单位训练情况</div>
+                <div class="chart-container" id="unitChart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">⚠️ 预警类型分布</div>
+                <div class="chart-container" id="warningChart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">📋 本月概览</div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">空枪训练完成</span>
+                    <span class="mini-stat-value" style="color: var(--accent-blue);">1,256 次</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">实弹训练完成</span>
+                    <span class="mini-stat-value" style="color: var(--accent-green);">324 次</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">弹药使用</span>
+                    <span class="mini-stat-value" style="color: var(--accent-yellow);">3,240 发</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">教官工作量</span>
+                    <span class="mini-stat-value" style="color: var(--accent-purple);">512 小时</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">严重预警</span>
+                    <span class="mini-stat-value" style="color: var(--accent-red);">5 次</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-stat-label">安全事故</span>
+                    <span class="mini-stat-value" style="color: var(--accent-green);">0 次</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 趋势图
+        const trendChart = echarts.init(document.getElementById('trendChart'));
+        trendChart.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: '#161b22',
+                borderColor: '#30363d',
+                textStyle: { color: '#c9d1d9' }
+            },
+            legend: {
+                data: ['训练人次', '平均得分'],
+                textStyle: { color: '#8b949e' },
+                top: 0
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: ['1月1日', '1月2日', '1月3日', '1月4日', '1月5日', '1月6日'],
+                axisLine: { lineStyle: { color: '#30363d' } },
+                axisLabel: { color: '#8b949e' }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '人次',
+                    axisLine: { lineStyle: { color: '#30363d' } },
+                    axisLabel: { color: '#8b949e' },
+                    splitLine: { lineStyle: { color: '#30363d', type: 'dashed' } }
+                },
+                {
+                    type: 'value',
+                    name: '分数',
+                    min: 60,
+                    max: 100,
+                    axisLine: { lineStyle: { color: '#30363d' } },
+                    axisLabel: { color: '#8b949e' },
+                    splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: '训练人次',
+                    type: 'bar',
+                    data: [120, 145, 132, 156, 148, 165],
+                    itemStyle: { color: '#58a6ff' }
+                },
+                {
+                    name: '平均得分',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    data: [78, 80, 82, 81, 84, 85],
+                    smooth: true,
+                    itemStyle: { color: '#3fb950' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(63, 185, 80, 0.3)' },
+                            { offset: 1, color: 'rgba(63, 185, 80, 0.05)' }
+                        ])
+                    }
+                }
+            ]
+        });
+
+        // 成绩分布图
+        const distributionChart = echarts.init(document.getElementById('distributionChart'));
+        distributionChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: '#161b22',
+                borderColor: '#30363d',
+                textStyle: { color: '#c9d1d9' }
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                textStyle: { color: '#8b949e' }
+            },
+            series: [
+                {
+                    name: '成绩分布',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['60%', '50%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#0d1117',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: '#c9d1d9'
+                        }
+                    },
+                    labelLine: { show: false },
+                    data: [
+                        { value: 156, name: '优秀(90+)', itemStyle: { color: '#3fb950' } },
+                        { value: 342, name: '良好(80-89)', itemStyle: { color: '#58a6ff' } },
+                        { value: 268, name: '及格(70-79)', itemStyle: { color: '#d29922' } },
+                        { value: 90, name: '不及格(<70)', itemStyle: { color: '#f85149' } }
+                    ]
+                }
+            ]
+        });
+
+        // 单位训练情况图
+        const unitChart = echarts.init(document.getElementById('unitChart'));
+        unitChart.setOption({
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                backgroundColor: '#161b22',
+                borderColor: '#30363d',
+                textStyle: { color: '#c9d1d9' }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                axisLine: { lineStyle: { color: '#30363d' } },
+                axisLabel: { color: '#8b949e' },
+                splitLine: { lineStyle: { color: '#30363d', type: 'dashed' } }
+            },
+            yAxis: {
+                type: 'category',
+                data: ['市局刑侦', '市局特警', '区分局治安', '市局交警', '区分局刑侦'],
+                axisLine: { lineStyle: { color: '#30363d' } },
+                axisLabel: { color: '#8b949e' }
+            },
+            series: [
+                {
+                    name: '训练人数',
+                    type: 'bar',
+                    data: [85, 72, 68, 56, 45],
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#58a6ff' },
+                            { offset: 1, color: '#a371f7' }
+                        ])
+                    }
+                }
+            ]
+        });
+
+        // 预警分布图
+        const warningChart = echarts.init(document.getElementById('warningChart'));
+        warningChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: '#161b22',
+                borderColor: '#30363d',
+                textStyle: { color: '#c9d1d9' }
+            },
+            series: [
+                {
+                    name: '预警类型',
+                    type: 'pie',
+                    radius: '65%',
+                    center: ['50%', '50%'],
+                    data: [
+                        { value: 8, name: '枪口方向', itemStyle: { color: '#f85149' } },
+                        { value: 5, name: '扳机纪律', itemStyle: { color: '#d29922' } },
+                        { value: 6, name: '姿势不稳', itemStyle: { color: '#58a6ff' } },
+                        { value: 4, name: '其他', itemStyle: { color: '#8b949e' } }
+                    ],
+                    label: {
+                        color: '#c9d1d9',
+                        formatter: '{b}: {c}次'
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        });
+
+        // 响应式调整
+        window.addEventListener('resize', () => {
+            trendChart.resize();
+            distributionChart.resize();
+            unitChart.resize();
+            warningChart.resize();
+        });
+    </script>
+</body>
+</html>
+
