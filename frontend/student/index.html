@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学员训练终端 - 智能枪械训练系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 90%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .student-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .score-value {
+            font-size: 64px;
+            font-weight: bold;
+        }
+
+        .score-label {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        .sub-scores {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .sub-score-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .sub-score-title {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .sub-score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .errors-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .errors-title {
+            color: #856404;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .error-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .error-icon {
+            width: 30px;
+            height: 30px;
+            background: #ffc107;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .error-text {
+            flex: 1;
+            color: #333;
+        }
+
+        .progress-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .progress-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.5s ease;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status-training {
+            background: #ffc107;
+            color: white;
+        }
+
+        .status-passed {
+            background: #28a745;
+            color: white;
+        }
+
+        .critical-warning {
+            background: #dc3545;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 智能枪械训练系统</h1>
+            <p>学员训练终端</p>
+        </div>
+
+        <div class="student-info">
+            <div class="info-item">
+                <div class="info-label">学员姓名</div>
+                <div class="info-value" id="studentName">张三</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">警号</div>
+                <div class="info-value" id="badgeNumber">001001</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">工位</div>
+                <div class="info-value" id="workstation">01号</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">训练状态</div>
+                <div class="info-value">
+                    <span class="status-badge status-training" id="status">训练中</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 危险警告（动态显示） -->
+        <div id="criticalWarning" style="display: none;" class="critical-warning">
+            ⚠️ 危险！枪口指向非安全区域！
+        </div>
+
+        <div class="score-display">
+            <div class="score-circle">
+                <div class="score-value" id="overallScore">78</div>
+                <div class="score-label">当前得分</div>
+            </div>
+        </div>
+
+        <div class="sub-scores">
+            <div class="sub-score-card">
+                <div class="sub-score-title">持枪姿势</div>
+                <div class="sub-score-value" id="postureScore">75</div>
+            </div>
+            <div class="sub-score-card">
+                <div class="sub-score-title">扳机纪律</div>
+                <div class="sub-score-value" id="triggerScore">85</div>
+            </div>
+            <div class="sub-score-card">
+                <div class="sub-score-title">瞄准线</div>
+                <div class="sub-score-value" id="aimScore">72</div>
+            </div>
+            <div class="sub-score-card">
+                <div class="sub-score-title">稳定性</div>
+                <div class="sub-score-value" id="stabilityScore">80</div>
+            </div>
+        </div>
+
+        <div class="errors-section" id="errorsSection">
+            <div class="errors-title">⚠️ 需要改进的地方：</div>
+            <div class="error-item">
+                <div class="error-icon">!</div>
+                <div class="error-text">右肘角度过大(125°)，应保持在90-120°</div>
+            </div>
+            <div class="error-item">
+                <div class="error-icon">!</div>
+                <div class="error-text">头部位置过低，无法形成正确的瞄准线</div>
+            </div>
+            <div class="error-item">
+                <div class="error-icon">!</div>
+                <div class="error-text">手部轻微抖动，建议加强稳定性训练</div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-title">训练进度 - 空枪训练阶段</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 60%;">
+                    3 / 5 次合格
+                </div>
+            </div>
+            <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                继续保持！连续5次达标后即可进入实弹训练
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket连接
+        const ws = new WebSocket('ws://localhost:8000/ws/student/1/workstation/1');
+
+        ws.onopen = () => {
+            console.log('✅ WebSocket连接成功');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('收到消息:', data);
+
+            if (data.type === 'real_time_analysis') {
+                updateScores(data.data);
+            } else if (data.type === 'warning' && data.data.warning_level === 'critical') {
+                showCriticalWarning(data.data.description);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket错误:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket连接关闭，尝试重连...');
+            setTimeout(() => location.reload(), 3000);
+        };
+
+        // 更新分数显示
+        function updateScores(data) {
+            document.getElementById('overallScore').textContent = Math.round(data.overall_score);
+            document.getElementById('postureScore').textContent = Math.round(data.posture_score);
+            document.getElementById('triggerScore').textContent = Math.round(data.trigger_discipline_score);
+            document.getElementById('aimScore').textContent = Math.round(data.aim_line_score);
+            document.getElementById('stabilityScore').textContent = Math.round(data.stability_score);
+
+            // 更新错误列表
+            if (data.errors && data.errors.length > 0) {
+                const errorsHtml = data.errors.map(error => `
+                    <div class="error-item">
+                        <div class="error-icon">!</div>
+                        <div class="error-text">${error.description}</div>
+                    </div>
+                `).join('');
+
+                document.querySelector('#errorsSection').innerHTML = `
+                    <div class="errors-title">⚠️ 需要改进的地方：</div>
+                    ${errorsHtml}
+                `;
+            }
+        }
+
+        // 显示严重警告
+        function showCriticalWarning(message) {
+            const warningDiv = document.getElementById('criticalWarning');
+            warningDiv.textContent = `⚠️ ${message}`;
+            warningDiv.style.display = 'block';
+
+            // 播放警告音
+            // const audio = new Audio('/sounds/warning.mp3');
+            // audio.play();
+
+            // 3秒后隐藏
+            setTimeout(() => {
+                warningDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 模拟数据更新（实际由WebSocket推送）
+        setInterval(() => {
+            // 这里仅作演示，实际数据由后端推送
+            const simulatedData = {
+                overall_score: 70 + Math.random() * 20,
+                posture_score: 70 + Math.random() * 20,
+                trigger_discipline_score: 70 + Math.random() * 20,
+                aim_line_score: 70 + Math.random() * 20,
+                stability_score: 70 + Math.random() * 20,
+                errors: []
+            };
+            // updateScores(simulatedData);
+        }, 2000);
+    </script>
+</body>
+</html>
+

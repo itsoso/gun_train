@@ -1,0 +1,52 @@
+# Web框架
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+websockets==12.0
+
+# AI和计算机视觉
+opencv-python==4.9.0.80
+mediapipe==0.10.9
+ultralytics==8.1.0  # YOLOv8
+torch==2.1.2
+torchvision==0.16.2
+onnxruntime-gpu==1.16.3
+numpy==1.24.3
+scikit-learn==1.4.0
+
+# 视频处理
+ffmpeg-python==0.2.0
+
+# 数据库
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+pymongo==4.6.1
+redis==5.0.1
+
+# 异步任务
+celery==5.3.6
+flower==2.0.1  # Celery监控
+
+# 数据验证
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# 工具库
+python-jose[cryptography]==3.3.0  # JWT
+passlib[bcrypt]==1.7.4  # 密码加密
+python-dotenv==1.0.0
+pillow==10.2.0
+pandas==2.1.4
+
+# 日志
+loguru==0.7.2
+
+# 测试
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# 数据可视化和报告
+matplotlib==3.8.2
+reportlab==4.0.9  # PDF生成
+
