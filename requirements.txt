@@ -44,9 +44,19 @@ loguru==0.7.2
 # 测试
 pytest==7.4.4
 pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
 httpx==0.26.0
 
 # 数据可视化和报告
 matplotlib==3.8.2
 reportlab==4.0.9  # PDF生成
+
+# TTS语音合成
+pyttsx3==2.90
+edge-tts==6.1.9
+pygame==2.5.2
+
+# 系统监控
+psutil==5.9.8
 
