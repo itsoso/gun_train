@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:13-alpine
+    container_name: gun_train_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gun_training
+      POSTGRES_USER: gun_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - gun_train_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gun_admin -d gun_training"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB 数据库（视频存储）
+  mongodb:
+    image: mongo:5.0
+    container_name: gun_train_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: gun_training_videos
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - gun_train_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存和消息队列
+  redis:
+    image: redis:6-alpine
+    container_name: gun_train_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - gun_train_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI 应用
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gun_train_api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://gun_admin:${POSTGRES_PASSWORD:-change_this_password}@postgres:5432/gun_training
+      - MONGODB_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379/0
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./logs:/app/logs
+      - ./recordings:/app/recordings
+      - ./models:/app/models
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gun_train_network
+    command: uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker（后台任务）
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gun_train_worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://gun_admin:${POSTGRES_PASSWORD:-change_this_password}@postgres:5432/gun_training
+      - MONGODB_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app/backend
+      - ./logs:/app/logs
+      - ./recordings:/app/recordings
+      - ./models:/app/models
+    depends_on:
+      - redis
+      - postgres
+      - mongodb
+    networks:
+      - gun_train_network
+    command: celery -A backend.tasks worker --loglevel=info
+
+  # Flower（Celery监控）
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gun_train_flower
+    restart: unless-stopped
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+    networks:
+      - gun_train_network
+    command: celery -A backend.tasks flower --port=5555
+
+  # Nginx（反向代理）
+  nginx:
+    image: nginx:alpine
+    container_name: gun_train_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    networks:
+      - gun_train_network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  gun_train_network:
+    driver: bridge
+

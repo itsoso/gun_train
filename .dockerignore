@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Data
+recordings/
+data/videos/
+data/clips/
+
+# Models (根据需要调整)
+# models/*.pt
+
+# Documentation
+docs/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Misc
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+README.md
+LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+
